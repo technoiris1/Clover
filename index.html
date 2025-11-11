@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Clover — Air Quality Index</title>
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    </head>
+    <body
+        class="bg-gradient-to-b from-green-50 to-green-100 min-h-screen flex flex-col items-center justify-center"
+    >
+        <!-- 🌿 HEADER -->
+        <header class="text-center mb-4">
+            <h1 class="text-3xl font-semibold text-green-700 tracking-tight">
+                Clover Graphical Analysis
+            </h1>
+            <p class="text-gray-600 text-sm max-w-md mx-auto mt-1">
+                Real-time air quality visualization by
+                <span class="text-green-700 font-medium">Clover Health Bot</span
+                >.
+            </p>
+        </header>
+
+        <!-- 🌫️ AQI CARD -->
+        <div
+            class="bg-white shadow-md rounded-2xl p-6 flex flex-col items-center justify-center w-80"
+        >
+            <h2 class="text-lg font-semibold text-green-700 mb-1">
+                Air Quality Index
+            </h2>
+            <p class="text-gray-500 text-xs mb-4">
+                Current atmospheric reading
+            </p>
+
+            <canvas id="aqiChart" width="250" height="250"></canvas>
+        </div>
+
+        <script>
+            // ------------------------------
+            // 🌿 AQI CONFIG
+            // ------------------------------
+            const AQI_COLORS = [
+                "rgb(76, 175, 80)", // Good
+                "rgb(255, 235, 59)", // Moderate
+                "rgb(255, 152, 0)", // Unhealthy for Sensitive
+                "rgb(244, 67, 54)", // Unhealthy
+                "rgb(156, 39, 176)", // Very Unhealthy
+                "rgb(126, 0, 35)", // Hazardous
+            ];
+
+            const AQI_LEVELS = [
+                { max: 50, label: "Good" },
+                { max: 100, label: "Moderate" },
+                { max: 200, label: "Unhealthy (Sensitive)" },
+                { max: 300, label: "Unhealthy" },
+                { max: 400, label: "Very Unhealthy" },
+                { max: 600, label: "Hazardous" },
+            ];
+
+            const AQI_VALUE = 268; // 🟠 Hardcoded AQI value (0–600)
+
+            function getAqiColor(value) {
+                if (value <= 50) return AQI_COLORS[0];
+                if (value <= 100) return AQI_COLORS[1];
+                if (value <= 200) return AQI_COLORS[2];
+                if (value <= 300) return AQI_COLORS[3];
+                if (value <= 400) return AQI_COLORS[4];
+                return AQI_COLORS[5];
+            }
+
+            function getAqiStatus(value) {
+                return (
+                    AQI_LEVELS.find((l) => value <= l.max)?.label || "Unknown"
+                );
+            }
+
+            // ------------------------------
+            // 🌿 CUSTOM TEXT PLUGIN
+            // ------------------------------
+            const textPlugin = {
+                id: "aqiText",
+                afterDraw(chart) {
+                    const {
+                        ctx,
+                        chartArea: { width, height },
+                    } = chart;
+                    ctx.save();
+
+                    const value = AQI_VALUE;
+                    const color = getAqiColor(value);
+                    const status = getAqiStatus(value);
+
+                    ctx.font = "bold 28px Inter, sans-serif";
+                    ctx.fillStyle = "#333";
+                    ctx.textAlign = "center";
+                    ctx.fillText(value, width / 2, height / 1.35);
+
+                    ctx.font = "14px Inter, sans-serif";
+                    ctx.fillStyle = color;
+                    ctx.fillText(status, width / 2, height / 1.15);
+
+                    ctx.restore();
+                },
+            };
+
+            // ------------------------------
+            // 🌿 CHART SETUP
+            // ------------------------------
+            const aqiCtx = document.getElementById("aqiChart");
+
+            new Chart(aqiCtx, {
+                type: "doughnut",
+                data: {
+                    datasets: [
+                        {
+                            data: [AQI_VALUE, 600 - AQI_VALUE],
+                            backgroundColor: [
+                                getAqiColor(AQI_VALUE),
+                                "rgb(234,234,234)",
+                            ],
+                            borderWidth: 0,
+                            cutout: "75%",
+                        },
+                    ],
+                },
+                options: {
+                    plugins: {
+                        tooltip: { enabled: false },
+                        legend: { display: false },
+                    },
+                    circumference: 180,
+                    rotation: -90,
+                },
+                plugins: [textPlugin],
+            });
+        </script>
+    </body>
+</html>
